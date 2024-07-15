@@ -1,0 +1,1719 @@
+---
+title: "Colors"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+* library(ggplot2)\
+* library(RColorBrewer)\
+* library(viridis)\
+* library(colorspace)\
+* library(wesanderson)\
+* library(yarrr)\
+* library(ghibli)\
+* library(dutchmasters) #(devtools::install_github("EdwinTh/dutchmasters"))\
+* library(ochRe) #(devtools::install_github("ropenscilabs/ochRe"))\
+
+```{r include=FALSE}
+library(ggplot2)
+library(RColorBrewer)
+library(viridis)
+library(colorspace)
+library(wesanderson)
+library(yarrr)
+library(ghibli)
+library(dutchmasters)
+library(remotes)
+library(ochRe)
+library(scales)
+library(ggsci)
+library(gridExtra)
+```
+
+A simple guide to show a selection of color schemes and palettes available in R
+
+## Color Theory
+
+### Selecting Colors
+
+* All functions below are taken from: https://github.com/gastonstat/colortools 
+* This library has been removed from R - but functions can be taken from the github link above
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+adjacent <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	adja_colors <- tmp_cols[c(1,2,12)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 2, 12)] <- "black"
+				lab_col[c(3:11)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 2, 12)] <- "white"
+				lab_col[c(3:11)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 2, 12)] <- labcol
+				lab_col[c(3:11)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 2, 12)] <- labcol
+				lab_col[c(3:11)] <- col2HSV(bg)
+			}
+		}	
+		# hide non-adjacent colors
+		tmp_cols[c(3:11)] <- paste(substr(tmp_cols[c(3:11)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex=cex)
+		# title
+		if (title)
+			title(paste("Adjacent (analogous) colors of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	adja_colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+anagrams <-
+function(color)
+{
+	# convert to HSV
+	col_hsv = rgb2hsv(col2rgb((color)))[,1]
+	# get hue, saturation, and value
+	hue = col_hsv[1]
+	sat = col_hsv[2]
+	val = col_hsv[3]
+	# transparency
+	alpha = 1
+	if (substr(color, 1, 1) == "#" && nchar(color) == 9)
+		alpha = substr(color, 8, 9)
+	# make sure it is in HEX code
+	hex = hsv(hue, sat, val)
+	# break down hex in pairs
+	par1 = substr(hex, 2, 3)
+	par2 = substr(hex, 4, 5)
+	par3 = substr(hex, 6, 7)
+	# put pars in a vector
+	hp = c(par1, par2, par3)
+	# create vector to store results
+	anacols = rep("", 27)
+	# generate anagrams
+	aux = 1
+	for (i in 1:3)
+	{
+		for (j in 1:3)
+		{
+			for (k in 1:3)
+			{
+				anacols[aux] = paste("#", hp[i], hp[j], hp[k], sep="")
+				aux = aux + 1
+			}
+		}
+	}
+	if (alpha != 1)
+		anacols = paste(anacols, alpha, sep="")
+	# result
+	anacols
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+analogous <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE) 
+{
+	adjacent(color, plot=plot, bg=bg, labcol=labcol, cex=cex, title=title)
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+col2HSV <-
+function(color)
+{
+	# convert to RGB
+	rgb_col = col2rgb(color)
+	# convert to HSV
+	hsv_col = rgb2hsv(rgb_col)
+	if (length(color) == 1)
+	{
+		# get degree
+		hue = hsv_col[1]
+		sat = hsv_col[2]
+		val = hsv_col[3]
+		# get colors with hsv
+		hex_col = hsv(hue, sat, val)
+	}
+	if (length(color) > 1)
+	{
+		hex_col = rep("", length(color))
+		for (j in 1:length(color))
+		{
+			hex_col[j] = hsv(hsv_col[1,j], hsv_col[2,j], hsv_col[3,j])
+		}
+	}
+	hex_col
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+complementary <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	comp_colors <- tmp_cols[c(1, 7)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 7)] <- "black"
+				lab_col[c(2:6,8:12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 7)] <- "white"
+				lab_col[c(2:6,8:12)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 7)] <- labcol
+				lab_col[c(2:6,8:12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 7)] <- labcol
+				lab_col[c(2:6,8:12)] <- col2HSV(bg)
+			}
+		}	
+		# hide non-adjacent colors
+		tmp_cols[c(2:6,8:12)] <- paste(substr(tmp_cols[c(2:6,8:12)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex=cex)
+		# title
+		if (title)
+			title(paste("Complementary (opposite) color of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	comp_colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+opposite <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE) 
+{
+	complementary(color, plot=plot, bg=bg, labcol=labcol, cex=cex, title=title)
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+pizza <-
+function(colors, bg = "gray95", border = NA, 
+	init.angle = 105, cex = 0.8, lty = 1, labcol = NULL, ...)
+{
+  n <- length(colors)
+  x <- rep(1, n)
+  x <- c(0, cumsum(x)/sum(x))
+  dx <- diff(x)
+  nx <- length(dx)
+  # set colors
+  labels = colors
+  # 
+  if (is.null(labcol))
+  {
+    if (mean(col2rgb(bg)) > 127)
+      labcol = rep("black", n)
+    if (mean(col2rgb(bg)) <= 127)
+      labcol = rep("white", n)
+  }
+  # prepare plot window
+  par(bg = bg)
+  plot.new()
+  pin <- par("pin")
+  xlim <- ylim <- c(-1, 1)
+  if (pin[1L] > pin[2L]) 
+    xlim <- (pin[1L]/pin[2L]) * xlim
+  else ylim <- (pin[2L]/pin[1L]) * ylim
+  dev.hold()
+  on.exit(dev.flush())
+  plot.window(xlim, ylim, "", asp = 1)
+  # get ready to plot
+  border <- rep(border, length.out = nx)
+  if (is.null(border[1]))
+    border <- rep(bg, length.out = nx)
+  lty <- rep(lty, length.out = nx)
+  angle <- rep(45, length.out = nx)
+  radius = seq(1, 0, by=-1/n)[1:n]
+  twopi <- -2 * pi
+  t2xy <- function(t, rad) {
+    t2p <- twopi * t + init.angle * pi/180
+    list(x = rad * cos(t2p), y = rad * sin(t2p))
+  }
+  # plot colored segments
+  for (i in 1L:nx)
+  {
+    n <- max(2, floor(200 * dx[i]))
+    P <- t2xy(seq.int(x[i], x[i + 1], length.out = n), rad=radius[1])
+    polygon(c(P$x, 0), c(P$y, 0), angle = angle[i], 
+            border = border[i], col = colors[i], lty = lty[i])
+    P <- t2xy(mean(x[i + 0:1]), rad=radius[1])
+    lab <- labels[i]
+    if (!is.na(lab) && nzchar(lab)) {
+      adjs = 0.5
+      if (P$x > 1e-08) adjs <- 0
+      if (P$x < -1e-08) adjs <- 1
+      lines(c(1, 1.05) * P$x, c(1, 1.05) * P$y, col=labcol[i])
+      text(1.1 * P$x, 1.1 * P$y, labels[i], xpd = TRUE, 
+           adj = adjs, cex=cex, col=labcol[i], ...)
+    }
+  }
+  invisible(NULL)
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+sequential <-
+function(color, percentage=5, what="saturation", 
+	s=NULL, v=NULL, alpha=NULL, fun="linear", plot=TRUE, verbose=TRUE)
+{	
+	# convert to HSV
+	col_hsv = rgb2hsv(col2rgb(color))[,1]
+	# transparency
+	if (is.null(alpha))
+		alpha = 1
+	if (substr(color, 1, 1) == "#" && nchar(color) == 9)
+		alpha = substr(color, 8, 9)
+	# get hue, saturation, and value
+	hue = col_hsv[1]
+	if (is.null(s)) s = col_hsv[2]
+	if (is.null(v)) v = col_hsv[3]
+	# sequence function
+	getseq = switch(fun, 
+		linear = seq(0, 1, by=percentage/100),
+		sqrt = sqrt(seq(0, 1, by=percentage/100)),
+		log = log1p(seq(0, 1, by=percentage/100)),
+		log10 = log10(seq(0, 1, by=percentage/100))
+		)
+	# what type of sequence?
+	if (what == "saturation") {
+		sat = getseq
+		fixed = paste("v=", round(v,2), " and alpha=", alpha, sep="")
+		if (is.numeric(alpha))
+			seq_col = hsv(hue, s=sat, v=v, alpha=alpha)
+		if (is.character(alpha)) {
+			seq_col = hsv(hue, s=sat, v=v)
+			seq_col = paste(seq_col, alpha, sep="")
+		}
+	}
+	if (what == "value") {
+		val = getseq
+		fixed = paste("s=", round(s,2), " and alpha=", alpha, sep="")
+		if (is.numeric(alpha))
+			seq_col = hsv(hue, s=s, v=val, alpha=alpha)
+		if (is.character(alpha)) {
+			seq_col = hsv(hue, s=s, v=val)
+			seq_col = paste(seq_col, alpha, sep="")
+		}
+	}
+	if (what == "alpha") {
+		alpha = getseq
+		fixed = paste("s=", round(s,2), " and v=", round(v,2), sep="")
+		seq_col = hsv(hue, s=s, v=v, alpha=alpha)
+	}
+	# if plot TRUE
+	if (plot)
+	{
+		n = length(seq(0, 1, by=percentage/100))
+		fx = unlist(fixed)
+		#dev.new()
+		plot(0, 0, type="n", xlim=c(0,1), ylim=c(0,1), axes=FALSE, xlab="", ylab="")
+		rect(0:(n-1)/n, 0, 1:n/n, 1, col=seq_col, border="lightgray")
+		mtext(seq_col, side=1, at=0.5:(n)/n, cex=0.8, las=2)
+		title(paste("Sequential colors based on ", what, "\n with fixed ", fx, sep=""),
+			cex.main=0.9)
+	}
+	# result
+	if (verbose)
+		seq_col
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+setColors <-
+function(color, num)
+{
+	# convert to RGB
+	rgb_col = col2rgb(color)
+	# convert to HSV
+	hsv_col = rgb2hsv(rgb_col)[,1]
+	# get degree
+	hue = hsv_col[1]
+	sat = hsv_col[2]
+	val = hsv_col[3]
+	cols = seq(hue, hue + 1, by=1/num)
+	cols = cols[1:num]
+	cols[cols > 1] <- cols[cols > 1] - 1
+	# get colors with hsv
+	colors = hsv(cols, sat, val)
+	# transparency
+	if (substr(color, 1, 1) == "#" && nchar(color) == 9)
+	{
+		alpha = substr(color, 8, 9)
+		colors = paste(colors, alpha, sep="")
+	}
+	colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+splitComp <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	split_colors <- tmp_cols[c(1,6,8)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 6, 8)] <- "black"
+				lab_col[c(2:5,7,9:12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 6, 8)] <- "white"
+				lab_col[c(2:5,7,9:12)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 6, 8)] <- labcol
+				lab_col[c(2:5,7,9:12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 6, 8)] <- labcol
+				lab_col[c(2:5,7,9:12)] <- col2HSV(bg)
+			}
+		}	
+		# hide non-adjacent colors
+		tmp_cols[c(2:5,7,9:12)] <- paste(substr(tmp_cols[c(2:5,7,9:12)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex=cex)
+		# title
+		if (title)
+			title(paste("Split complementary colors of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	split_colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+square <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex = 0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	sqr_colors <- tmp_cols[c(1,4,7,10)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1,4,7,10)] <- "black"
+				lab_col[c(2,3,5,6,8,9,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1,4,7,10)] <- "white"
+				lab_col[c(2,3,5,6,8,9,11,12)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1,4,7,10)] <- labcol
+				lab_col[c(2,3,5,6,8,9,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1,4,7,10)] <- labcol
+				lab_col[c(2,3,5,6,8,9,11,12)] <- col2HSV(bg)
+			}
+		}	
+		# hide non-adjacent colors
+		tmp_cols[c(2,3,5,6,8,9,11,12)] <- paste(substr(tmp_cols[c(2,3,5,6,8,9,11,12)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex = cex)
+		# title
+		if (title)
+			title(paste("Square color scheme of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	sqr_colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+tetradic <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	tetrad_colors <- tmp_cols[c(1,3,7,9)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1,3,7,9)] <- "black"
+				lab_col[c(2,4,5,6,8,10,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1,3,7,9)] <- "white"
+				lab_col[c(2,4,5,6,8,10,11,12)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1,3,7,9)] <- labcol
+				lab_col[c(2,4,5,6,8,10,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1,3,7,9)] <- labcol
+				lab_col[c(2,4,5,6,8,10,11,12)] <- col2HSV(bg)
+			}
+		}	
+		# hide non-adjacent colors
+		tmp_cols[c(2,4,5,6,8,10,11,12)] <- paste(substr(tmp_cols[c(2,4,5,6,8,10,11,12)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex=cex)
+		# title
+		if (title)
+			title(paste("Tetradic colors of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	tetrad_colors
+}
+```
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+triadic <-
+function(color, plot=TRUE, bg="white", labcol=NULL, cex=0.8, title=TRUE)
+{	
+	tmp_cols = setColors(color, 12)
+	triad_colors <- tmp_cols[c(1,5,9)]
+
+	# plot
+	if (plot)
+	{
+		# labels color
+		if (is.null(labcol)) 
+		{
+			lab_col = rep("", 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 5, 9)] <- "black"
+				lab_col[c(2,3,4,6,7,8,10,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 5, 9)] <- "white"
+				lab_col[c(2,3,4,6,7,8,10,11,12)] <- col2HSV(bg)
+			}
+		} else {
+			lab_col = rep(labcol, 12)
+			if (mean(col2rgb(bg)) > 127)
+			{
+				lab_col[c(1, 5, 9)] <- labcol
+				lab_col[c(2,3,4,6,7,8,10,11,12)] <- col2HSV(bg)
+			} else {
+				lab_col[c(1, 5, 9)] <- labcol
+				lab_col[c(2,3,4,6,7,8,10,11,12)] <- col2HSV(bg)
+			}
+		}
+		# hide non-adjacent colors
+		tmp_cols[c(2,3,4,6,7,8,10,11,12)] <- paste(
+			substr(tmp_cols[c(2,3,4,6,7,8,10,11,12)],1,7), "0D", sep="")
+		pizza(tmp_cols, labcol=lab_col, bg=bg, cex=cex)
+		# title
+		if (title)
+			title(paste("Triadic color scheme of: ", tmp_cols[1]), 
+				col.main=lab_col[1], cex.main=0.8)
+	}
+	# result
+	triad_colors
+}
+```
+
+
+```{r include=FALSE}
+# source: https://github.com/gastonstat/colortools 
+wheel <-
+function(color, num=12, bg="gray95", border=NULL, 
+	init.angle=105, cex=1, lty=NULL, main=NULL, verbose=TRUE, ...)
+{
+  if (!is.numeric(num) || any(is.na(num) | num < 0)) 
+    stop("\n'num' must be positive")
+  x <- rep(1, num)
+  x <- c(0, cumsum(x)/sum(x))
+  dx <- diff(x)
+  nx <- length(dx)
+  # set colors
+  col = setColors(color, num)
+  labels = col
+  # labels color
+  labcol = ifelse( mean(col2rgb(bg)) > 127, "black", "white")
+  # prepare plot window
+  par(bg = bg)
+  plot.new()
+  pin <- par("pin")
+  xlim <- ylim <- c(-1, 1)
+  if (pin[1L] > pin[2L]) 
+    xlim <- (pin[1L]/pin[2L]) * xlim
+  else ylim <- (pin[2L]/pin[1L]) * ylim
+  dev.hold()
+  on.exit(dev.flush())
+  plot.window(xlim, ylim, "", asp = 1)
+  # get ready to plot
+  if (is.null(border[1])) {
+    border <- rep(bg, length.out = nx)    
+  } else {
+    border <- rep(border, length.out = nx)    
+  }
+  if (!is.null(lty))
+    lty <- rep(NULL, length.out = nx)
+  angle <- rep(45, length.out = nx)
+  radius = seq(1, 0, by=-1/num)[1:num]
+  twopi <- -2 * pi
+  t2xy <- function(t, rad) {
+    t2p <- twopi * t + init.angle * pi/180
+    list(x = rad * cos(t2p), y = rad * sin(t2p))
+  }
+  # plot colored segments
+  for (i in 1L:nx)
+  {
+    n <- max(2, floor(200 * dx[i]))
+    P <- t2xy(seq.int(x[i], x[i + 1], length.out = n), rad=radius[1])
+    polygon(c(P$x, 0), c(P$y, 0), angle = angle[i], 
+            border = border[i], col = col[i], lty = lty[i])
+    P <- t2xy(mean(x[i + 0:1]), rad=radius[1])
+    lab <- labels[i]
+    if (!is.na(lab) && nzchar(lab)) {
+      adjs = 0.5
+      if (P$x > 1e-08) adjs <- 0
+      if (P$x < -1e-08) adjs <- 1
+      lines(c(1, 1.05) * P$x, c(1, 1.05) * P$y)
+      text(1.1 * P$x, 1.1 * P$y, labels[i], xpd = TRUE, 
+           adj = adjs, cex=cex, col=labcol, ...)
+    }
+  }
+  # add title
+  title(main = main, ...)
+  # return color names
+  if (verbose)
+    col
+}
+```
+
+```{r, echo=FALSE}
+wheel("darkblue", num = 12)
+adjacent("darkblue")
+complementary("darkblue")
+triadic("darkblue")
+tetradic("darkblue")
+square("darkblue")
+splitComp("darkblue")
+sequential("darkblue")
+```
+
+### Hue Saturation Value (HSV) = Hue Saturation Brightness (HSB) Colour Space 
+* A colour can be specified using R's hsv() function that takes three arguments: hue, saturation, and value (brightness), all in the range [0, 1]
+
+```{r, echo=FALSE}
+d=expand.grid(h=seq(0,0.95,0.05), s=seq(0,0.95,0.05), v=seq(0,1,0.2))
+ggplot() +
+coord_polar(theta="x") +
+facet_wrap(~v) +
+scale_x_continuous(name="hue", limits=c(0,1), breaks=seq(0.025,0.925,0.1), labels=seq(0,0.9,0.1)) +
+scale_y_continuous(name="saturation", breaks=seq(0, 1, 0.2)) +
+scale_fill_identity() +
+geom_rect(data=d, mapping=aes(xmin=h, xmax=h+resolution(h), ymin=s, ymax=s+resolution(s), fill=hsv(h,s,v)), color="white", linewidth=0.1)
+```
+
+### Hue Chroma Luminance (HCL) Colour Space
+* A colour can be specified using R's hcl() function that takes three arguments: hue [0,360], chroma [0,100], and luminance [0,100]
+* This space is similar to the HSV space, however, in the HCL space steps of equal size correspond to approximately equal perceptual changes in colour 
+  + Note that the possible values of chroma and luminance actually depend on the specific hue; the ranges above are only indicative
+
+```{r, echo=FALSE}
+d=expand.grid(h=seq(0,350,10), c=seq(0,100,5), l=seq(0,100,20))
+ggplot() +
+coord_polar(theta="x")+facet_wrap(~l) +
+scale_x_continuous(name="hue", limits=c(0,360), breaks=seq(5,345,20), labels=seq(0,340,20)) +
+scale_y_continuous(name="chroma", breaks=seq(0, 100, 20)) +
+scale_fill_identity() +
+geom_rect(data=d, mapping=aes(xmin=h, xmax=h+resolution(h), ymin=c, ymax=c+resolution(c), fill=hcl(h,c,l)), color="white", linewidth=0.1)
+```
+
+### Red Green Blue (RGB) Colour Space
+* RGB is the built-in colour space. Instead of "manually" creating a #RRGGBB colour string, a colour can be specified using R's rgb() function that takes three arguments: red, green, and blue (which, by default, all have a range of [0, 1])
+
+```{r, echo=FALSE}
+d=expand.grid(r=seq(0,1,0.1), g=seq(0,1,0.1), b=seq(0,1,0.1))
+ggplot() +
+facet_wrap(~b) +
+scale_x_continuous(name="red", breaks=seq(0.05, 1.05, 0.2), labels=seq(0, 1, 0.2)) +
+scale_y_continuous(name="green", breaks=seq(0.05, 1.05, 0.2), labels=seq(0, 1, 0.2)) +
+scale_fill_identity() +
+geom_rect(data=d, mapping=aes(xmin=r, xmax=r+resolution(r), ymin=g, ymax=g+resolution(g), fill=rgb(r,g,b)), color="white", linewidth=0.1)
+```
+
+## Color Palletes
+
+### RColorBrewer
+
+```{r, echo=FALSE}
+display.brewer.all(type='seq')
+```
+
+```{r, echo=FALSE}
+display.brewer.all(type='seq', colorblindFriendly = TRUE)
+```
+
+```{r, echo=FALSE}
+display.brewer.all(type='qual')
+```
+
+```{r, echo=FALSE}
+display.brewer.all(type='qual', colorblindFriendly = TRUE)
+```
+
+```{r, echo=FALSE}
+display.brewer.all(type='div')
+```
+
+```{r, echo=FALSE}
+display.brewer.all(type='div', colorblindFriendly = TRUE)
+```
+
+### Viridis
+
+```{r, echo=FALSE}
+viridis_names <-c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo")
+
+n <- 50
+par(mfrow=c(8,1), mar = c(1,1,1,1))
+f <- sapply(1:8, function(x) image(matrix(1:n, n, 1), col = viridis(n=n, option = LETTERS[x]), axes =FALSE, main = viridis_names[x]))
+```
+
+### colorspace
+
+```{r, echo=FALSE}
+hcl_palettes("qualitative", plot = TRUE)
+hcl_palettes("sequential (single-hue)", plot = TRUE)
+hcl_palettes("sequential (multi-hue)", plot = TRUE)
+hcl_palettes("diverging", plot = TRUE)
+```
+
+### wesanderson
+
+```{}
+wes_palette(name, n, type = c("discrete", "continuous"))
+```
+
+* `name`: Name of desired palette
+* `n`: Number of colors desired. Unfortunately most palettes now only have 4 or 5 colors
+* `type`: Either “continuous” or “discrete”
+  + Use continuous if you want to automatically interpolate between colours
+
+```{r, echo=FALSE}
+par(mfrow=c(10,1))
+for(i in names(wes_palettes)) {
+  print(wes_palette(i))
+}
+
+```
+
+### Pirate Palette (yarrr)
+
+```{r, echo=FALSE}
+piratepal(palette = "all")
+```
+
+### ochRe
+
+```{r include=FALSE}
+vis_palette <-
+  function(pal,
+           ttl = deparse(substitute(pal)),
+           num = length(pal)) {
+    if (num <= 0)
+      stop("'num' should be > 0")
+    pal_func <- grDevices::colorRampPalette(pal)
+    graphics::image(
+      seq_len(num),
+      1,
+      as.matrix(seq_len(num)),
+      col = pal_func(num),
+      main = paste0(ttl),
+      xlab = "",
+      ylab = "",
+      xaxt = "n",
+      yaxt = "n",
+      bty = "n"
+    )
+  }
+```
+
+```{r, echo=FALSE}
+pal_names <- names(ochre_palettes)
+par(mfrow=c(length(ochre_palettes)/2, 2), 
+    lheight = 2, mar=rep(1, 4), adj = 0)
+for (i in 1:length(ochre_palettes)){
+    vis_palette(ochre_palettes[[i]], pal_names[i])
+}
+```
+
+### Dutch Masters
+
+```{r, echo=FALSE}
+pal_names <- names(dutchmasters)
+par(mfrow=c(length(dutchmasters)/2, 2), 
+    lheight = 2, mar=rep(1, 4), adj = 0)
+for (i in 1:length(dutchmasters)){
+    vis_palette(dutchmasters[[i]], pal_names[i])
+}
+```
+
+### Ghibli 
+
+```{r, echo=FALSE}
+par(mfrow=c(9,3))
+for(i in names(ghibli_palettes)) {
+  print(ghibli_palette(i))
+}
+```
+
+
+### ggsci Colors
+
+#### Discrete Colors
+
+```{r, echo=FALSE}
+show_col(pal_npg()(10))
+```
+
+```{r, echo=FALSE}
+show_col(pal_aaas()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_nejm()(8))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_lancet()(9))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_jama()(7))
+```
+
+
+
+```{r, echo=FALSE}
+show_col(pal_bmj()(9))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_jco()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_ucscgb()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_d3()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_locuszoom()(7))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_igv()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_cosmic()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_uchicago()(9))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_startrek()(7))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_tron()(7))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_futurama()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_rickandmorty()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_simpsons()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_flatui()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_frontiers()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_gsea()(10))
+```
+
+
+```{r, echo=FALSE}
+show_col(pal_material()(10))
+```
+
+
+#### Continuous Colors
+
+```{r, echo=FALSE, fig.height=1.2, fig.width=7}
+# Define the palettes we want to use
+ggsci_palettes <- list(
+  GSEA = pal_gsea()(12)
+)
+
+# Set up the plotting area
+n <- 12
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+```
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Bootstrap5_blue = pal_bs5("blue")(10),
+  Bootstrap5_indigo = pal_bs5("indigo")(10),
+  Bootstrap5_purple = pal_bs5("purple")(10),
+  Bootstrap5_pink = pal_bs5("pink")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+```
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Bootstrap5_red = pal_bs5("red")(10),
+  Bootstrap5_orange = pal_bs5("orange")(10),
+  Bootstrap5_yellow = pal_bs5("yellow")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+```
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Bootstrap5_green = pal_bs5("green")(10),
+  Bootstrap5_teal = pal_bs5("teal")(10),
+  Bootstrap5_cyan = pal_bs5("cyan")(10),
+  Bootstrap5_gray = pal_bs5("gray")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+```
+
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Material_red = pal_material("red")(10),
+  Material_pink = pal_material("pink")(10),
+  Material_purple = pal_material("purple")(10),
+  Material_deep_purple = pal_material("deep-purple")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Material_indigo = pal_material("indigo")(10),
+  Material_blue = pal_material("blue")(10),
+  Material_light_blue = pal_material("light-blue")(10),
+  Material_cyan = pal_material("cyan")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Material_teal = pal_material("teal")(10),
+  Material_green = pal_material("green")(10),
+  Material_light_green = pal_material("light-green")(10),
+  Material_lime = pal_material("lime")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Material_yellow = pal_material("yellow")(10),
+  Material_amber = pal_material("amber")(10),
+  Material_orange = pal_material("orange")(10),
+  Material_deep_orange = pal_material("deep-orange")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Material_brown = pal_material("brown")(10),
+  Material_grey = pal_material("grey")(10),
+  Material_blue_grey = pal_material("blue-grey")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+```
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Tailwind_slate = pal_tw3("slate")(10),
+  Tailwind_gray = pal_tw3("gray")(10),
+  Tailwind_zinc = pal_tw3("zinc")(10),
+  Tailwind_neutral = pal_tw3("neutral")(10),
+  Tailwind_stone = pal_tw3("stone")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Tailwind_red = pal_tw3("red")(10),
+  Tailwind_orange = pal_tw3("orange")(10),
+  Tailwind_amber = pal_tw3("amber")(10),
+  Tailwind_yellow = pal_tw3("yellow")(10),
+  Tailwind_lime = pal_tw3("lime")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Tailwind_green = pal_tw3("green")(10),
+  Tailwind_emerald = pal_tw3("emerald")(10),
+  Tailwind_teal = pal_tw3("teal")(10),
+  Tailwind_cyan = pal_tw3("cyan")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+ 
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Tailwind_sky = pal_tw3("sky")(10),
+  Tailwind_blue = pal_tw3("blue")(10),
+  Tailwind_indigo = pal_tw3("indigo")(10),
+  Tailwind_violet = pal_tw3("violet")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+```{r, echo=FALSE}
+# Define the palettes
+ggsci_palettes <- list(
+  Tailwind_purple = pal_tw3("purple")(10),
+  Tailwind_fuschia = pal_tw3("fuchsia")(10),
+  Tailwind_pink = pal_tw3("pink")(10),
+  Tailwind_rose = pal_tw3("rose")(10)
+)
+
+# Set up the plotting area
+n <- 10
+par(mfrow = c(length(ggsci_palettes), 1), mar = c(1, 1, 1, 1))
+
+# Create a function to plot each palette
+plot_palette <- function(palette_name) {
+  colors <- ggsci_palettes[[palette_name]]
+  image(matrix(1:n, n, 1), col = colors, axes = FALSE, main = palette_name)
+}
+
+# Apply the function to each palette
+invisible(sapply(names(ggsci_palettes), plot_palette))
+``` 
+
+### R inbuilt Colors
+
+##### Standalones
+
+```{r, echo=FALSE}
+ran1 <- c("white", "floralwhite",  "ghostwhite", "mintcream", "whitesmoke", 
+          "aliceblue", "cornflowerblue", "darkblue", "darkcyan", "darkturquoise", 
+          "mediumblue", "navy", "navyblue", "mediumturquoise", "midnightblue", 
+          "powderblue", "black", "darkslategrey", "beige",  "blanchedalmond",
+          "papayawhip", "moccasin", "peru", "saddlebrown", "sandybrown")
+ran2 <- c("blueviolet", "darkmagenta", "darkslateblue","darkviolet", "lavender", 
+          "lightslateblue", "mediumslateblue", "mediumvioletred", "violet", "darkred",
+          "darkgray", "darkgrey", "dimgray", "dimgrey", "gainsboro", 
+          "lightgray", "lightgrey", "lightslategray", "lightslategrey", "slategrey")
+ran3 <- c("darkgreen", "forestgreen", "greenyellow",  "lawngreen", "lightgreen",
+          "lightseagreen", "limegreen", "mediumaquamarine", "mediumseagreen",  "mediumspringgreen", 
+          "yellowgreen", "darkkhaki",  "darksalmon", "lightcoral", "lightgoldenrodyellow", "linen", "oldlace",
+          "palegoldenrod")
+
+show_col(ran1, cex_label = 0.6, ncol=5)
+show_col(ran2, cex_label = 0.6, ncol=5)
+show_col(ran3, cex_label = 0.6, ncol=5)
+```
+
+##### Green
+
+```{r, echo=FALSE}
+green1 <- c("aquamarine", "aquamarine1", "aquamarine2", "aquamarine3", "aquamarine4",
+            "chartreuse", "chartreuse1", "chartreuse2", "chartreuse3", "chartreuse4",
+            "darkolivegreen", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4",
+            "darkseagreen", "darkseagreen1", "darkseagreen2", "darkseagreen3", "darkseagreen4",
+            "honeydew", "honeydew1", "honeydew2", "honeydew3", "honeydew4")
+green2 <- c("olivedrab", "olivedrab1", "olivedrab2", "olivedrab3", "olivedrab4",
+            "palegreen", "palegreen1", "palegreen2", "palegreen3", "palegreen4", 
+            "seagreen", "seagreen1", "seagreen2", "seagreen3", "seagreen4",
+            "springgreen", "springgreen1", "springgreen2", "springgreen3", "springgreen4")
+show_col(green1, cex_label = 0.6, ncol=5)
+show_col(green2, cex_label = 0.6, ncol=5)
+```
+
+##### Blue
+
+```{r, echo=FALSE}
+blue1 <- c("azure", "azure1", "azure2", "azure3", "azure4",
+           "blue", "blue1", "blue2", "blue3", "blue4",
+           "cadetblue", "cadetblue1", "cadetblue2", "cadetblue3", "cadetblue4",
+           "cyan", "cyan1", "cyan2", "cyan3", "cyan4",
+           "darkslategray", "darkslategray1", "darkslategray2", "darkslategray3", "darkslategray4"
+)
+
+blue2 <- c("deepskyblue", "deepskyblue1", "deepskyblue2", "deepskyblue3", "deepskyblue4",
+           "dodgerblue", "dodgerblue1", "dodgerblue2", "dodgerblue3", "dodgerblue4",
+           "lightblue", "lightblue1", "lightblue2", "lightblue3", "lightblue4", 
+           "lightcyan", "lightcyan1", "lightcyan2", "lightcyan3", "lightcyan4"
+)
+
+blue3 <- c("lightskyblue", "lightskyblue1", "lightskyblue2", "lightskyblue3", "lightskyblue4",
+           "lightsteelblue", "lightsteelblue1", "lightsteelblue2", "lightsteelblue3", "lightsteelblue4",
+           "paleturquoise", "paleturquoise1", "paleturquoise2", "paleturquoise3", "paleturquoise4",
+           "royalblue", "royalblue1", "royalblue2", "royalblue3", "royalblue4"
+)
+
+blue4 <- c("slategray", "slategray1", "slategray2", "slategray3", "slategray4",
+           "skyblue", "skyblue1", "skyblue2", "skyblue3", "skyblue4",
+           "steelblue", "steelblue1", "steelblue2", "steelblue3", "steelblue4",
+           "turquoise", "turquoise1", "turquoise2", "turquoise3", "turquoise4"
+)
+
+show_col(blue1, cex_label = 0.6, ncol=5)
+show_col(blue2, cex_label = 0.6, ncol=5)
+show_col(blue3, cex_label = 0.6, ncol=5)
+show_col(blue4, cex_label = 0.6, ncol=5)
+```
+
+##### Brown
+
+```{r, echo=FALSE}
+brown1 <- c("brown", "brown1", "brown2", "brown3", "brown4",
+            "burlywood", "burlywood1", "burlywood2", "burlywood3", "burlywood4",
+            "chocolate", "chocolate1", "chocolate2", "chocolate3", "chocolate4",
+            "khaki", "khaki1", "khaki2", "khaki3", "khaki4"
+)
+
+brown2 <- c("sienna", "sienna1", "sienna2", "sienna3", "sienna4", 
+            "tan", "tan1", "tan2", "tan3", "tan4",
+            "wheat", "wheat1", "wheat2", "wheat3", "wheat4"
+)
+show_col(brown1, cex_label = 0.6, ncol=5)
+show_col(brown2, cex_label = 0.6, ncol=5)
+```
+
+##### Yellow
+
+```{r, echo=FALSE}
+yellow1 <- c("darkgoldenrod", "darkgoldenrod1", "darkgoldenrod2", "darkgoldenrod3", "darkgoldenrod4",
+             "gold", "gold1", "gold2", "gold3", "gold4", 
+             "goldenrod", "goldenrod1", "goldenrod2", "goldenrod3", "goldenrod4",
+             "lemonchiffon", "lemonchiffon1", "lemonchiffon2", "lemonchiffon3", "lemonchiffon4"
+)
+yellow2 <- c("lightgoldenrod", "lightgoldenrod1", "lightgoldenrod2", "lightgoldenrod3", "lightgoldenrod4", 
+             "lightyellow", "lightyellow1", "lightyellow2", "lightyellow3", "lightyellow4",
+             "yellow", "yellow1", "yellow2", "yellow3", "yellow4"
+)
+show_col(yellow1, cex_label = 0.6, ncol=5)
+show_col(yellow2, cex_label = 0.6, ncol=5)
+```
+
+##### Orange
+
+```{r, echo=FALSE}
+orange1 <- c("bisque", "bisque1", "bisque2", "bisque3", "bisque4",
+             "coral", "coral1", "coral2", "coral3", "coral4",
+             "darkorange", "darkorange1", "darkorange2", "darkorange3", "darkorange4",
+             "lightsalmon", "lightsalmon1", "lightsalmon2", "lightsalmon3", "lightsalmon4"
+)
+
+orange2 <- c("orange", "orange1", "orange2", "orange3", "orange4", 
+             "orangered", "orangered1", "orangered2", "orangered3", "orangered4",
+             "peachpuff", "peachpuff1", "peachpuff2", "peachpuff3", "peachpuff4",
+             "salmon", "salmon1", "salmon2", "salmon3", "salmon4"
+)
+show_col(orange1, cex_label = 0.6, ncol=5)
+show_col(orange2, cex_label = 0.6, ncol=5)
+```
+
+##### Red
+
+```{r, echo=FALSE}
+reds <- c("firebrick", "firebrick1", "firebrick2", "firebrick3", "firebrick4",
+          "indianred", "indianred1", "indianred2", "indianred3", "indianred4",
+          "red", "red1", "red2", "red3", "red4",
+          "tomato", "tomato1", "tomato2", "tomato3", "tomato4"
+)
+show_col(reds, cex_label = 0.6, ncol=5)
+```
+
+##### Pink
+
+```{r, echo=FALSE}
+pink1 <- c("deeppink", "deeppink1", "deeppink2", "deeppink3", "deeppink4",
+           "hotpink", "hotpink1", "hotpink2", "hotpink3", "hotpink4",
+           "lightpink", "lightpink1", "lightpink2", "lightpink3", "lightpink4",
+           "mistyrose", "mistyrose1", "mistyrose2", "mistyrose3", "mistyrose4"
+)
+
+pink2 <- c("pink", "pink1", "pink2", "pink3", "pink4",
+           "rosybrown", "rosybrown1", "rosybrown2", "rosybrown3", "rosybrown4",
+           "violetred", "violetred1", "violetred2", "violetred3", "violetred4"
+)
+show_col(pink1, cex_label = 0.6, ncol=5)
+show_col(pink2, cex_label = 0.6, ncol=5)
+```
+
+##### Purple
+
+```{r, echo=FALSE}
+purple1 <- c("darkorchid", "darkorchid1", "darkorchid2", "darkorchid3", "darkorchid4",
+             "lavenderblush", "lavenderblush1", "lavenderblush2", "lavenderblush3", "lavenderblush4",
+             "magenta", "magenta1", "magenta2", "magenta3", "magenta4", 
+             "maroon", "maroon1", "maroon2", "maroon3", "maroon4"
+)
+purple2 <- c("mediumorchid", "mediumorchid1", "mediumorchid2", "mediumorchid3", "mediumorchid4",
+             "mediumpurple", "mediumpurple1", "mediumpurple2", "mediumpurple3", "mediumpurple4",
+             "orchid", "orchid1", "orchid2", "orchid3", "orchid4", 
+             "palevioletred", "palevioletred1", "palevioletred2", "palevioletred3", "palevioletred4"
+)
+purple3 <- c("purple", "purple1", "purple2", "purple3", "purple4",
+             "plum", "plum1", "plum2", "plum3", "plum4",
+             "slateblue", "slateblue1", "slateblue2", "slateblue3", "slateblue4",
+             "thistle", "thistle1", "thistle2", "thistle3", "thistle4"
+)
+show_col(purple1, cex_label = 0.6, ncol=5)
+show_col(purple2, cex_label = 0.6, ncol=5)
+show_col(purple3, cex_label = 0.6, ncol=5)
+```
+
+##### Gray / Grey
+
+```{r, echo=FALSE}
+gray1 <- c("gray", "gray0", "gray1", "gray2", "gray3",
+           "gray4", "gray5", "gray6", "gray7", "gray8", 
+           "gray9", "gray10", "gray11", "gray12",  "gray13",
+           "gray14", "gray15", "gray16", "gray17", "gray18",
+           "gray19", "gray20", "gray21", "gray22", "gray23"
+)
+gray2 <- c("gray24", "gray25", "gray26", "gray27", "gray28",
+           "gray29", "gray30", "gray31", "gray32", "gray33", 
+           "gray34", "gray35", "gray36", "gray37", "gray38",
+           "gray39", "gray40", "gray41", "gray42", "gray43", 
+           "gray44", "gray45", "gray46", "gray47", "gray48"
+)
+gray3 <- c("gray49", "gray50", "gray51", "gray52", "gray53", 
+           "gray54", "gray55", "gray56", "gray57", "gray58", 
+           "gray59", "gray60", "gray61", "gray62", "gray63", 
+           "gray64", "gray65", "gray66", "gray67", "gray68", 
+           "gray69", "gray70", "gray71", "gray72", "gray73"
+)
+gray4 <- c("gray74", "gray75", "gray76", "gray77", "gray78", 
+           "gray79", "gray80", "gray81", "gray82", "gray83", 
+           "gray84", "gray85", "gray86", "gray87", "gray88", 
+           "gray89", "gray90", "gray91", "gray92", "gray93"
+)
+gray5 <- c("gray94", "gray95", "gray96", "gray97", "gray98", 
+           "gray99", "gray100"
+)
+
+show_col(gray1, cex_label = 0.6, ncol=5)
+show_col(gray2, cex_label = 0.6, ncol=5)
+show_col(gray3, cex_label = 0.6, ncol=5)
+show_col(gray4, cex_label = 0.6, ncol=5)
+show_col(gray5, cex_label = 0.6, ncol=5)
+```
+
+```{r, echo=FALSE}
+grey1 <- c("grey", "grey0", "grey1", "grey2", "grey3", 
+           "grey4","grey5", "grey6", "grey7", "grey8", 
+           "grey9", "grey10", "grey11", "grey12", "grey13", 
+           "grey14", "grey15", "grey16", "grey17", "grey18", 
+           "grey19", "grey20", "grey21", "grey22", "grey23"
+)
+grey2 <- c("grey24", "grey25", "grey26", "grey27", "grey28", 
+           "grey29", "grey30", "grey31", "grey32", "grey33", 
+           "grey34", "grey35", "grey36", "grey37", "grey38", 
+           "grey39", "grey40", "grey41", "grey42", "grey43", 
+           "grey44", "grey45", "grey46", "grey47", "grey48"
+)
+grey3 <- c("grey49", "grey50", "grey51", "grey52", "grey53", 
+           "grey54", "grey55", "grey56", "grey57", "grey58", 
+           "grey59", "grey60", "grey61", "grey62", "grey63", 
+           "grey64", "grey65", "grey66", "grey67", "grey68", 
+           "grey69", "grey70", "grey71", "grey72", "grey73"
+)
+grey4 <- c("grey74", "grey75", "grey76", "grey77", "grey78", 
+           "grey79", "grey80", "grey81", "grey82", "grey83", 
+           "grey84", "grey85", "grey86", "grey87", "grey88", 
+           "grey89", "grey90", "grey91", "grey92", "grey93"
+)
+grey5 <- c("grey94", "grey95", "grey96", "grey97", "grey98", 
+           "grey99", "grey100"
+)
+show_col(grey1, cex_label = 0.6, ncol=5)
+show_col(grey2, cex_label = 0.6, ncol=5)
+show_col(grey3, cex_label = 0.6, ncol=5)
+show_col(grey4, cex_label = 0.6, ncol=5)
+show_col(grey5, cex_label = 0.6, ncol=5)
+```
+
+##### Offwhite
+
+```{r, echo=FALSE}
+offwhite1 <- c("antiquewhite", "antiquewhite1", "antiquewhite2", "antiquewhite3", "antiquewhite4", 
+              "cornsilk", "cornsilk1", "cornsilk2", "cornsilk3", "cornsilk4",
+              "ivory", "ivory1", "ivory2", "ivory3", "ivory4"
+)
+offwhite2 <- c("navajowhite", "navajowhite1","navajowhite2", "navajowhite3", "navajowhite4",
+              "seashell", "seashell1", "seashell2", "seashell3", "seashell4", 
+              "snow", "snow1", "snow2", "snow3", "snow4"
+)
+show_col(offwhite1, cex_label = 0.6, ncol=5)
+show_col(offwhite2, cex_label = 0.6, ncol=5)
+```
+
+
+
+```{r include=FALSE}
+
+randoms <- c("white", "floralwhite",  "ghostwhite", "mintcream", "whitesmoke", 
+             "black",
+             "aliceblue", "cornflowerblue", "darkblue", "darkcyan", "darkturquoise", 
+             "mediumblue", "navy", "navyblue", "mediumturquoise", "midnightblue", "powderblue", 
+             "beige",  "blanchedalmond", "papayawhip", "moccasin", "peru", "saddlebrown", "sandybrown",
+             "blueviolet", "darkmagenta", "darkslateblue","darkviolet", "lavender", 
+             "lightslateblue", "mediumslateblue", "mediumvioletred", "violet",
+             "darkgray", "darkgrey", "dimgray", "dimgrey", "gainsboro", "lightgray",  
+             "lightgrey", "lightslategray", "lightslategrey", "slategrey",
+             "darkgreen", "forestgreen", "greenyellow",  "lawngreen", "lightgreen",
+             "lightseagreen", "limegreen", "mediumaquamarine", "mediumseagreen",  "mediumspringgreen", "yellowgreen", 
+             "darkkhaki", "darkred", "darksalmon", "darkslategrey", "lightcoral", "lightgoldenrodyellow", "linen", "oldlace",
+             "palegoldenrod"
+)
+
+# Greens
+
+greens <- c("aquamarine", "aquamarine1", "aquamarine2", "aquamarine3", "aquamarine4",
+            "chartreuse", "chartreuse1", "chartreuse2", "chartreuse3", "chartreuse4",
+            "darkolivegreen", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4",
+            "darkseagreen", "darkseagreen1", "darkseagreen2", "darkseagreen3", "darkseagreen4",
+            "green", "green1", "green2", "green3", "green4",
+            "honeydew", "honeydew1", "honeydew2", "honeydew3", "honeydew4",
+            "olivedrab", "olivedrab1", "olivedrab2", "olivedrab3", "olivedrab4",
+            "palegreen", "palegreen1", "palegreen2", "palegreen3", "palegreen4", 
+            "seagreen", "seagreen1", "seagreen2", "seagreen3", "seagreen4",
+            "springgreen", "springgreen1", "springgreen2", "springgreen3", "springgreen4"
+)
+
+# Blues
+
+blues <- c("azure", "azure1", "azure2", "azure3", "azure4",
+           "blue", "blue1", "blue2", "blue3", "blue4",
+           "cadetblue", "cadetblue1", "cadetblue2", "cadetblue3", "cadetblue4",
+           "cyan", "cyan1", "cyan2", "cyan3", "cyan4",
+           "darkslategray", "darkslategray1", "darkslategray2", "darkslategray3", "darkslategray4",
+           "deepskyblue", "deepskyblue1", "deepskyblue2", "deepskyblue3", "deepskyblue4",
+           "dodgerblue", "dodgerblue1", "dodgerblue2", "dodgerblue3", "dodgerblue4",
+           "lightblue", "lightblue1", "lightblue2", "lightblue3", "lightblue4", 
+           "lightcyan", "lightcyan1", "lightcyan2", "lightcyan3", "lightcyan4",
+           "lightskyblue", "lightskyblue1", "lightskyblue2", "lightskyblue3", "lightskyblue4",
+           "lightsteelblue", "lightsteelblue1", "lightsteelblue2", "lightsteelblue3", "lightsteelblue4",
+           "paleturquoise", "paleturquoise1", "paleturquoise2", "paleturquoise3", "paleturquoise4",
+           "royalblue", "royalblue1", "royalblue2", "royalblue3", "royalblue4",
+           "slategray", "slategray1", "slategray2", "slategray3", "slategray4",
+           "skyblue", "skyblue1", "skyblue2", "skyblue3", "skyblue4",
+           "steelblue", "steelblue1", "steelblue2", "steelblue3", "steelblue4",
+           "turquoise", "turquoise1", "turquoise2", "turquoise3", "turquoise4"
+)
+
+# Browns
+
+browns <- c("brown", "brown1", "brown2", "brown3", "brown4",
+            "burlywood", "burlywood1", "burlywood2", "burlywood3", "burlywood4",
+            "chocolate", "chocolate1", "chocolate2", "chocolate3", "chocolate4",
+            "khaki", "khaki1", "khaki2", "khaki3", "khaki4",
+            "sienna", "sienna1", "sienna2", "sienna3", "sienna4", 
+            "tan", "tan1", "tan2", "tan3", "tan4",
+            "wheat", "wheat1", "wheat2", "wheat3", "wheat4"
+)
+
+# Yellow
+
+yellows <- c("darkgoldenrod", "darkgoldenrod1", "darkgoldenrod2", "darkgoldenrod3", "darkgoldenrod4",
+             "gold", "gold1", "gold2", "gold3", "gold4", 
+             "goldenrod", "goldenrod1", "goldenrod2", "goldenrod3", "goldenrod4",
+             "lemonchiffon", "lemonchiffon1", "lemonchiffon2", "lemonchiffon3", "lemonchiffon4",
+             "lightgoldenrod", "lightgoldenrod1", "lightgoldenrod2", "lightgoldenrod3", "lightgoldenrod4", 
+             "lightyellow", "lightyellow1", "lightyellow2", "lightyellow3", "lightyellow4",
+             "yellow", "yellow1", "yellow2", "yellow3", "yellow4"
+)
+
+# Orange
+
+oranges <- c("bisque", "bisque1", "bisque2", "bisque3", "bisque4",
+             "coral", "coral1", "coral2", "coral3", "coral4",
+             "darkorange", "darkorange1", "darkorange2", "darkorange3", "darkorange4",
+             "lightsalmon", "lightsalmon1", "lightsalmon2", "lightsalmon3", "lightsalmon4",
+             "orange", "orange1", "orange2", "orange3", "orange4", 
+             "orangered", "orangered1", "orangered2", "orangered3", "orangered4",
+             "peachpuff", "peachpuff1", "peachpuff2", "peachpuff3", "peachpuff4",
+             "salmon", "salmon1", "salmon2", "salmon3", "salmon4"
+)
+
+# Reds
+
+reds <- c("firebrick", "firebrick1", "firebrick2", "firebrick3", "firebrick4",
+          "indianred", "indianred1", "indianred2", "indianred3", "indianred4",
+          "red", "red1", "red2", "red3", "red4",
+          "tomato", "tomato1", "tomato2", "tomato3", "tomato4"
+)
+
+# Pinks
+
+pinks <- c("deeppink", "deeppink1", "deeppink2", "deeppink3", "deeppink4",
+           "hotpink", "hotpink1", "hotpink2", "hotpink3", "hotpink4",
+           "lightpink", "lightpink1", "lightpink2", "lightpink3", "lightpink4",
+           "mistyrose", "mistyrose1", "mistyrose2", "mistyrose3", "mistyrose4",
+           "pink", "pink1", "pink2", "pink3", "pink4",
+           "rosybrown", "rosybrown1", "rosybrown2", "rosybrown3", "rosybrown4",
+           "violetred", "violetred1", "violetred2", "violetred3", "violetred4"
+)
+
+# Purples
+
+purples <- c("darkorchid", "darkorchid1", "darkorchid2", "darkorchid3", "darkorchid4",
+             "lavenderblush", "lavenderblush1", "lavenderblush2", "lavenderblush3", "lavenderblush4",
+             "magenta", "magenta1", "magenta2", "magenta3", "magenta4", 
+             "maroon", "maroon1", "maroon2", "maroon3", "maroon4", 
+             "mediumorchid", "mediumorchid1", "mediumorchid2", "mediumorchid3", "mediumorchid4",
+             "mediumpurple", "mediumpurple1", "mediumpurple2", "mediumpurple3", "mediumpurple4",
+             "orchid", "orchid1", "orchid2", "orchid3", "orchid4", 
+             "palevioletred", "palevioletred1", "palevioletred2", "palevioletred3", "palevioletred4",
+             "purple", "purple1", "purple2", "purple3", "purple4",
+             "plum", "plum1", "plum2", "plum3", "plum4",
+             "slateblue", "slateblue1", "slateblue2", "slateblue3", "slateblue4",
+             "thistle", "thistle1", "thistle2", "thistle3", "thistle4"
+)
+
+# Grey
+
+grays <- c("gray", "gray0", "gray1", "gray2", "gray3",
+           "gray4", "gray5", "gray6", "gray7", "gray8", 
+           "gray9", "gray10", "gray11", "gray12",  "gray13",
+           "gray14", "gray15", "gray16", "gray17", "gray18",
+           "gray19", "gray20", "gray21", "gray22", "gray23",
+           "gray24", "gray25", "gray26", "gray27", "gray28",
+           "gray29", "gray30", "gray31", "gray32", "gray33", 
+           "gray34", "gray35", "gray36", "gray37", "gray38",
+           "gray39", "gray40", "gray41", "gray42", "gray43", 
+           "gray44", "gray45", "gray46", "gray47", "gray48", 
+           "gray49", "gray50", "gray51", "gray52", "gray53", 
+           "gray54", "gray55", "gray56", "gray57", "gray58", 
+           "gray59", "gray60", "gray61", "gray62", "gray63", 
+           "gray64", "gray65", "gray66", "gray67", "gray68", 
+           "gray69", "gray70", "gray71", "gray72", "gray73", 
+           "gray74", "gray75", "gray76", "gray77", "gray78", 
+           "gray79", "gray80", "gray81", "gray82", "gray83", 
+           "gray84", "gray85", "gray86", "gray87", "gray88", 
+           "gray89", "gray90", "gray91", "gray92", "gray93", 
+           "gray94", "gray95", "gray96", "gray97", "gray98", 
+           "gray99", "gray100"
+)
+
+greys <- c("grey", "grey0", "grey1", "grey2", "grey3", "grey4",
+           "grey5", "grey6", "grey7", "grey8", "grey9", "grey10", 
+           "grey11", "grey12", "grey13", "grey14", "grey15", "grey16", 
+           "grey17", "grey18", "grey19", "grey20", "grey21", "grey22", 
+           "grey23", "grey24", "grey25", "grey26", "grey27", "grey28", 
+           "grey29", "grey30", "grey31", "grey32", "grey33", "grey34", 
+           "grey35", "grey36", "grey37", "grey38", "grey39", "grey40",
+           "grey41", "grey42", "grey43", "grey44", "grey45", "grey46", 
+           "grey47", "grey48", "grey49", "grey50", "grey51", "grey52", 
+           "grey53", "grey54", "grey55", "grey56", "grey57", "grey58", 
+           "grey59", "grey60", "grey61", "grey62", "grey63", "grey64", 
+           "grey65", "grey66", "grey67", "grey68", "grey69", "grey70", 
+           "grey71", "grey72", "grey73", "grey74", "grey75", "grey76", 
+           "grey77", "grey78", "grey79", "grey80", "grey81", "grey82", 
+           "grey83", "grey84", "grey85", "grey86", "grey87", "grey88", 
+           "grey89", "grey90", "grey91", "grey92", "grey93", "grey94", 
+           "grey95", "grey96", "grey97", "grey98", "grey99", "grey100"
+)
+
+# Whites
+
+offwhite <- c("antiquewhite", "antiquewhite1", "antiquewhite2", "antiquewhite3", "antiquewhite4", 
+              "cornsilk", "cornsilk1", "cornsilk2", "cornsilk3", "cornsilk4",
+              "ivory", "ivory1", "ivory2", "ivory3", "ivory4",
+              "navajowhite", "navajowhite1","navajowhite2", "navajowhite3", "navajowhite4",
+              "seashell", "seashell1", "seashell2", "seashell3", "seashell4", 
+              "snow", "snow1", "snow2", "snow3", "snow4"
+)
+
+```
+
+```{r include=FALSE}
+a=data.frame(c=randoms, y=seq(0, length(randoms)-1)%%9, x=seq(0, length(randoms)-1)%/%9)
+ggplot() +
+scale_x_continuous(name="", breaks=NULL, expand=c(0, 0)) +
+scale_y_continuous(name="", breaks=NULL, expand=c(0, 0)) +
+scale_fill_identity() +
+geom_rect(data=a, mapping=aes(xmin=x, xmax=x+1, ymin=y, ymax=y+1), fill="white") +
+geom_rect(data=a, mapping=aes(xmin=x+0.05, xmax=x+1, ymin=y+0.5, ymax=y+1, fill=c)) +
+geom_text(data=a, mapping=aes(x=x+0.5, y=y+0.5, label=c), colour="black", hjust=0.5, vjust=1.5, size=2.5)
+
+```
+
