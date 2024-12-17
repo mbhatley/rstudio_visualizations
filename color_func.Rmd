@@ -1,0 +1,86 @@
+---
+title: "RGB and HEX Color Codes for R Base Colors"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Load required libraries
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(grDevices)
+```
+
+```{r, echo=FALSE}
+# Get the list of built-in colors
+colors <- colors()
+
+# Initialize an empty data frame
+color_df <- data.frame(ColorSample = character(),
+                       Name = character(),
+                       RGB = character(),
+                       HEX = character(),
+                       Background = character(),
+                       stringsAsFactors = FALSE)
+
+# Initialize an empty vector to store the raster images
+color_samples <- vector("list", length(colors))
+```
+
+```{r, echo=FALSE}
+# Loop over the colors and append to the data frame and color_samples
+for (i in seq_along(colors)) {
+  color <- colors[i]
+  
+  # Convert color name to RGB
+  rgb_values <- col2rgb(color)
+  
+  # Convert RGB values to HEX
+  hex_value <- rgb(rgb_values[1], rgb_values[2], rgb_values[3], maxColorValue = 255)
+  
+  # Create a temporary data frame
+  temp_df <- data.frame(ColorSample = color,
+                        Name = color,
+                        RGB = paste(rgb_values[1], rgb_values[2], rgb_values[3], sep = " "),
+                        HEX = hex_value,
+                        Background = paste0("<span style='background-color:", hex_value, "; padding: 4px 8px; display: inline-block;'>&nbsp;</span>"),
+                        stringsAsFactors = FALSE)
+  
+  # Append the temporary data frame to the main data frame
+  color_df <- rbind(color_df, temp_df)
+  
+  # Create the raster image and store it in the color_samples vector
+  color_samples[[i]] <- as.raster(matrix(rev(rgb_values) / 255, nrow = 1))
+}
+
+# Add the color samples to the data frame
+color_df$ColorSample <- color_samples
+```
+
+```{r, echo=FALSE}
+# Convert the ColorSample column to a factor and arrange the data frame
+color_df <- color_df %>%
+  mutate(ColorSample = factor(ColorSample, levels = unique(ColorSample))) %>%
+  arrange(ColorSample) %>%
+  dplyr::select(-c("ColorSample"))
+
+color_df$Background <- ""
+```
+
+```{r, echo=FALSE}
+# Create a kable table with the background color
+kable_table <- kable(color_df, escape = FALSE, col.names = c("Name", "RGB", "HEX", "Background")) %>%
+  kable_styling(full_width = FALSE, font_size = "small", position = "center") %>%
+  column_spec(1, width = "20%") %>%
+  column_spec(2, width = "20%") %>%
+  column_spec(3, width = "20%") %>%
+  column_spec(4, width = "30%", background = color_df$HEX, color = "transparent")
+
+# Optionally, to remove text visually from column 4 while retaining background colors
+kable_table <- kable_table %>%
+  row_spec(0, bold = TRUE) # Bold the header row if needed
+
+# Print the kable table
+kable_table
+```
