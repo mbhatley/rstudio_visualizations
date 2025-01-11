@@ -1,0 +1,324 @@
+---
+title: "Kaggle Bigfoot Dataset"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(ggiraph)
+library(ggsci)
+library(ggalluvial)
+library(lubridate)
+library(gt)
+library(tidyverse)
+library(gridExtra)
+library(viridis)
+library(mapproj)
+library(cowplot)
+library(ggrepel)
+library(colorspace)
+library(gridExtra)
+library(purrr)
+library(ggpubr)
+library(naniar)
+```
+
+```{r, include=FALSE}
+bigfoot <- read.csv("2. bigfoot/bfro_reports_geocoded.csv")
+states <- read.csv("states.csv")
+```
+
+
+## Introduction
+
+This is an initial exploration of the `ggiraph` and `gt` packages in R. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+get_text_color <- function(background_color) {
+  # Convert background color to LAB color space
+  lab_color <- as(hex2RGB(background_color), "LAB")
+  
+  # Calculate perceived lightness
+  L <- lab_color@coords[, "L"]
+  
+  # Determine text color based on perceived lightness
+  ifelse(L < 40, "black", "white")
+}
+
+get_luminance_vector <- function(colors) {
+  rgb_values <- t(col2rgb(colors))
+  luminance <- 0.2126 * rgb_values[, 1] + 0.7152 * rgb_values[, 2] + 0.0722 * rgb_values[, 3]
+  return(luminance)
+}
+
+unique_regions <- unique(states$Region)
+region_colors <- viridis(length(unique_regions))
+names(region_colors) <- unique_regions
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+states_map <- map_data("state")
+states_mapping <- states %>%
+  select(-c("lat", "long"))
+states_mapping$State <- tolower(states_mapping$State)
+map_data <- left_join(states_map, states_mapping, by = c("region" = "State"))
+
+name_data <- states %>%
+  group_by(Abbreviation, lat, long, Region) %>%
+  filter(!Abbreviation %in% c('HI', 'AK')) %>%
+  mutate(text_color = get_text_color(region_colors[Region]))
+
+ggplot(data = states_mapping) +
+  geom_map(map = map_data, aes(map_id=State, fill = Region), color="lightblue", linewidth=0.1) +
+  geom_text(data = name_data, aes(x = long, y = lat, label = Abbreviation, color = I(text_color))) + 
+  expand_limits(x = map_data$long, y = map_data$lat) +
+  scale_fill_viridis_d() +
+  coord_map("polyconic") +
+  theme_void() +
+  labs(title = "Regional Breakdown of the USA",
+       fill = "Region") +
+  theme(legend.position = "bottom")
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_locations <- bigfoot %>%
+  dplyr::select(c(season, state, county, number, classification,
+           latitude, longitude, date)) %>%
+  dplyr::filter(!is.na(latitude)) %>%
+  mutate(date = ymd(date),
+         county = stringr::str_remove(county, " County$"),
+         month = month(date, label = TRUE, abbr = TRUE),
+         year = year(date),
+         decade = year - year %% 10) %>%
+  left_join(states, join_by(state == State)) %>%
+  select(-c("lat", "long")) %>%
+  dplyr::filter(year >= 1940)
+
+bigfoot_loc <- bigfoot_locations %>% 
+  slice(1:5) %>%
+  gt()
+
+bigfoot_loc
+```
+
+
+Let's explore the data. 
+\
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_decade <- bigfoot_locations %>%
+  dplyr::group_by(decade) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(decade) %>%
+  mutate(decade_reversed = factor(decade, levels = unique(decade))) %>%
+  ungroup()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_decade_pp <- ggplot(bigfoot_decade, aes(x = Sightings, y = decade_reversed, fill = decade_reversed)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis_d(direction = 1, name = "Decade") +
+  scale_y_discrete(limits = rev(levels(bigfoot_decade$decade_reversed))) + 
+  theme_minimal() +
+  labs(x = "Number of Sightings", 
+       y = "", 
+       title = "Bigfoot Sightings by Decade") +
+  theme(legend.position = "none", 
+        axis.text.y = element_text(hjust = 1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_decade_gg <- bigfoot_decade_pp + 
+  geom_col_interactive(aes(tooltip = Sightings, data_id = Sightings),
+    size = 3, 
+    hover_nearest = TRUE
+  )
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_season <- bigfoot_locations %>%
+  mutate(season = case_when(
+   month %in% c("Mar", "Apr", "May") ~ "spring",
+    month %in% c("Jun", "Jul", "Aug") ~ "summer",
+    month %in% c("Sep", "Oct", "Nov") ~ "fall",
+    month %in% c("Dec", "Jan", "Feb") ~ "winter",
+    TRUE ~ season
+  )) %>%
+  dplyr::group_by(season) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(season) %>%
+  ungroup()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_month <- bigfoot_locations %>%
+  mutate(season = case_when(
+    month %in% c("Mar", "Apr", "May") ~ "spring",
+    month %in% c("Jun", "Jul", "Aug") ~ "summer",
+    month %in% c("Sep", "Oct", "Nov") ~ "fall",
+    month %in% c("Dec", "Jan", "Feb") ~ "winter",
+    TRUE ~ season  
+  )) %>%
+  dplyr::group_by(season, month) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(season) %>%
+  ungroup()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_season_pp <- ggplot(bigfoot_season, aes(x = Sightings, y = season, fill = season)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis_d(direction = 1, name = "season") + 
+  theme_minimal() +
+  labs(x = "Number of Sightings", 
+       y = "", 
+       title = "Bigfoot Sightings by Season") +
+  theme(legend.position = "none", 
+        axis.text.y = element_text(hjust = 1))
+
+bigfoot_season_gg <- bigfoot_season_pp + 
+  geom_col_interactive(
+    data = bigfoot_month, 
+    aes(x = Sightings,
+        y = season, 
+        tooltip = paste0("Month: ", month,
+                         "<br>Sightings: ", Sightings), 
+        data_id = Sightings),
+    size = 3, 
+    hover_nearest = TRUE
+  )
+
+girafe(ggobj = plot_grid(bigfoot_decade_gg, bigfoot_season_gg), width_svg = 10, height_svg = 4)
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_states_total <- bigfoot_locations %>%
+  dplyr::group_by(state, Abbreviation) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(desc(Sightings)) %>%
+  slice(1:10) %>% # select the top 10 states for plotting
+  ungroup()
+
+#get the top 10 states in descending order
+top_10_states <- bigfoot_states_total %>%
+  arrange(desc(Sightings)) %>%
+  pull(state)
+
+state_order <- factor(top_10_states, levels = top_10_states)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ordered_decade <- c(1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020)
+
+bigfoot_states_decade <- bigfoot_locations %>%
+  dplyr::group_by(state, decade, Abbreviation) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(desc(Sightings)) %>%
+  ungroup()
+
+bigfoot_states_decade <- bigfoot_states_decade %>%
+  filter(state %in% top_10_states) %>%
+  mutate(state = factor(state, levels = top_10_states),
+         decade_reversed = factor(decade, levels = rev(ordered_decade)))
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_state_pp <- ggplot(bigfoot_states_decade, aes(x = Sightings, y = state, fill = decade_reversed)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis_d(direction = 1, name = "Decade") +
+  scale_y_discrete(limits = rev(levels(state_order))) + 
+  theme_minimal() +
+  labs(x = "Number of Sightings", 
+       y = "", 
+       title = "Top 10 States with Bigfoot Sightings") +
+  theme(legend.position = "none", 
+        axis.text.y = element_text(hjust = 1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_state_gg <- bigfoot_state_pp + 
+  geom_col_interactive(
+    aes(
+      fill = decade_reversed,
+      tooltip = paste0("Decade: ", decade, "<br>Sightings: ", Sightings),
+      data_id = paste(state, decade)
+    ),
+    size = 3, 
+    hover_nearest = TRUE
+  )
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_region_total <- bigfoot_locations %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(desc(Sightings)) %>%
+  ungroup()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_region_state_total <- bigfoot_locations %>%
+  dplyr::group_by(Region, state) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(desc(Sightings)) %>%
+  ungroup()
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ordered_decade <- c(1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020)
+
+bigfoot_region_decade <- bigfoot_locations %>%
+  dplyr::group_by(Region, decade, Abbreviation) %>%
+  dplyr::summarise(Sightings = n(), .groups = "drop") %>%
+  dplyr::arrange(desc(Sightings)) %>%
+  ungroup()
+
+# Get the order of regions based on total sightings
+region_order <- bigfoot_region_decade %>%
+  group_by(Region) %>%
+  summarise(TotalSightings = sum(Sightings)) %>%
+  arrange(desc(TotalSightings)) %>%
+  pull(Region)
+
+bigfoot_region_decade <- bigfoot_region_decade %>%
+  mutate(Region = factor(Region, levels = region_order),
+         decade = factor(decade, levels = rev(ordered_decade)))
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_region_pp <- ggplot(bigfoot_region_decade, aes(x = Sightings, y = Region, fill = decade)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis_d(direction = 1, name = "Decade") +
+  scale_y_discrete(limits = rev(levels(bigfoot_region_decade$Region))) +
+  theme_minimal() +
+  labs(x = "Number of Sightings", 
+       y = "", 
+       title = "Region Bigfoot Sightings") +
+  theme(legend.position = "none", 
+        axis.text.y = element_text(hjust = 1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+bigfoot_region_gg <- bigfoot_region_pp + 
+  geom_col_interactive(
+    aes(
+      fill = decade,
+      tooltip = paste0("Decade: ", decade, "<br>Sightings: ", Sightings),
+      data_id = paste(Region, decade)
+    ),
+    size = 3, 
+    hover_nearest = TRUE
+  )
+
+girafe(ggobj = plot_grid(bigfoot_region_gg, bigfoot_state_gg), width_svg = 10, height_svg = 4)
+```
