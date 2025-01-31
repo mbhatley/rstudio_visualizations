@@ -1,0 +1,90 @@
+---
+title: "African Camouflage Pattern Thought Experiment"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This worksheet is a thought-experiment to see how some African nations camouflage patterns (often designed in the 1980's or 1990's) would look if rendered as a modern digital pattern, or as a new take on the legacy Portugese Lizard patterns of the 1970's. 
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+## Zimbabwe
+
+```{r, echo=TRUE, fig.height=10, fig.width=10}
+set.seed(123)
+n <- 40
+
+df <- expand.grid(x = 1:n, y = 1:n)
+
+colors <- c("#CDC390", "#78543c", "#516444", "#404C34")  
+df$color <- sample(colors, nrow(df), replace = TRUE)
+
+ggplot(df, aes(x, y, fill = color)) +
+  geom_raster() +
+  scale_fill_identity() +
+  theme_void()
+```
+
+```{r, echo=TRUE, fig.height=10, fig.width=10}
+n <- 100
+
+df <- expand.grid(x = 1:n, y = 1:n)
+
+# Generate stripe-like effect using sine waves + randomness
+df <- df %>%
+  mutate(
+    stripe = sin(y / 5) + runif(nrow(df), -1.5, 1.5), 
+    color_group = cut(stripe, breaks = 4, labels = FALSE)  
+  )
+
+df$color <- colors[df$color_group]
+
+ggplot(df, aes(x, y, fill = color)) +
+  geom_raster() +
+  scale_fill_identity() +
+  theme_void()
+```
+
+
+
+
+## South Africa Soldier 2000 Pattern
+
+```{r, echo=TRUE, fig.height=10, fig.width=10}
+set.seed(123)
+n <- 40
+
+df <- expand.grid(x = 1:n, y = 1:n)
+
+colors <- c("#484647", "#796149", "#ACB799", "#5A7360", "#38503B")  
+df$color <- sample(colors, nrow(df), replace = TRUE)
+
+ggplot(df, aes(x, y, fill = color)) +
+  geom_raster() +
+  scale_fill_identity() +
+  theme_void()
+```
+
+```{r, echo=TRUE, fig.height=10, fig.width=10}
+n <- 100
+
+df <- expand.grid(x = 1:n, y = 1:n)
+
+# Generate stripe-like effect using sine waves + randomness
+df <- df %>%
+  mutate(
+    stripe = sin(y / 5) + runif(nrow(df), -0.5, 0.5), 
+    color_group = cut(stripe, breaks = 4, labels = FALSE)  
+  )
+
+df$color <- colors[df$color_group]
+
+ggplot(df, aes(x, y, fill = color)) +
+  geom_raster() +
+  scale_fill_identity() +
+  theme_void()
+```
